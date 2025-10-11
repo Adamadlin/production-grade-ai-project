@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    volumes: [".:/app"]
+    environment:
+      - ENV=dev
+      - MODEL_NAME=qwen2.5-3b-instruct-4bit
+      - OUT_DIR=/app/out
+      - DATA_DIR=/app/data
+      - VECTOR_DB_DIR=/app/vectorstore

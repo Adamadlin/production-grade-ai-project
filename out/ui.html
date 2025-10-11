@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Production-Grade AI UI</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121923; --muted:#9fb0c0; --text:#e7f0fb; --accent:#7cc4ff; --accent2:#4de2c2;
+    --ok:#28a745; --warn:#e0a800; --err:#dc3545; --border:#223043;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:linear-gradient(180deg,#0b0f14 0%,#0e141c 100%);color:var(--text);font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;}
+  header{padding:18px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);backdrop-filter: blur(6px);position:sticky;top:0;z-index:2;}
+  h1{margin:0;font-weight:700;font-size:18px;letter-spacing:.3px}
+  main{max-width:1100px;margin:22px auto;padding:0 16px 40px;}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px}
+  @media (min-width:900px){ .grid{grid-template-columns:1.1fr 1fr} }
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+  .card h2{margin:0 0 10px;font-size:16px}
+  label{display:block;margin:10px 0 6px;color:var(--muted)}
+  input[type="text"], input[type="number"], textarea, select{
+    width:100%;background:#0e1420;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;outline: none;
+  }
+  textarea{min-height:110px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  button{
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    border:none;color:#0a0e12;border-radius:11px;padding:10px 14px;font-weight:700;cursor:pointer;
+    box-shadow:0 6px 18px rgba(124,196,255,.25);transition:transform .04s ease-in-out
+  }
+  button:active{transform:scale(.98)}
+  .btn-secondary{background:#142235;color:var(--text);border:1px solid var(--border);box-shadow:none}
+  .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0f1622;border:1px solid var(--border);color:var(--muted);font-size:12px}
+  .status{margin-left:8px;font-size:12px}
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+  pre{white-space:pre-wrap;background:#0b111b;border:1px solid var(--border);padding:12px;border-radius:10px;overflow:auto;max-height:340px}
+  .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .right{margin-left:auto}
+  .muted{color:var(--muted)}
+  .result{margin-top:10px}
+  footer{opacity:.6;text-align:center;margin-top:20px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header class="flex">
+  <h1>Production-Grade AI – Local UI</h1>
+  <span class="pill">FastAPI + Chroma + Ollama</span>
+  <div class="right flex">
+    <label class="muted">Base URL</label>
+    <input id="baseUrl" type="text" value="http://localhost:8000" style="width:260px">
+    <button class="btn-secondary" onclick="ping()">Check API</button>
+    <span id="health" class="status"></span>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <section class="card">
+      <h2>Ingest</h2>
+      <label>URLs (one per line)</label>
+      <textarea id="urls" placeholder="https://www.iana.org/domains/reserved&#10;https://en.wikipedia.org/wiki/Roman_Empire"></textarea>
+      <div class="row">
+        <div>
+          <label>Chunk size (tokens/words)</label>
+          <input id="tokens" type="number" value="500" min="100" max="4000" />
+        </div>
+        <div>
+          <label>Overlap</label>
+          <input id="overlap" type="number" value="100" min="0" max="1000" />
+        </div>
+      </div>
+      <div class="flex" style="margin-top:10px">
+        <button onclick="doIngest()">Ingest</button>
+        <button class="btn-secondary" onclick="resetForm('ingest')">Clear</button>
+        <span id="ingestStatus" class="status"></span>
+      </div>
+      <div id="ingestOut" class="result"></div>
+    </section>
+
+    <section class="card">
+      <h2>Search</h2>
+      <label>Query</label>
+      <input id="q" type="text" placeholder="e.g., emperor, ICANN, Special-Use Domain" />
+      <div class="row">
+        <div>
+          <label>Top-k</label>
+          <input id="kSearch" type="number" value="5" min="1" max="20" />
+        </div>
+      </div>
+      <div class="flex" style="margin-top:10px">
+        <button onclick="doSearch()">Search</button>
+        <button class="btn-secondary" onclick="resetForm('search')">Clear</button>
+        <span id="searchStatus" class="status"></span>
+      </div>
+      <div id="searchOut" class="result"></div>
+    </section>
+
+    <section class="card">
+      <h2>Summarize</h2>
+      <label>Topic</label>
+      <input id="topic" type="text" placeholder="e.g., emperor" />
+      <div class="row-3">
+        <div>
+          <label>Top-k</label>
+          <input id="kSum" type="number" value="6" min="1" max="20" />
+        </div>
+        <div>
+          <label>Model</label>
+          <select id="model">
+            <option>qwen2.5:3b-instruct</option>
+            <option>llama3:8b</option>
+          </select>
+        </div>
+        <div>
+          <label>Max tokens</label>
+          <input id="maxTokens" type="number" value="400" min="64" max="2048" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>Temperature</label>
+          <input id="temperature" type="number" value="0.2" step="0.1" min="0" max="1" />
+        </div>
+        <div class="flex" style="align-items:flex-end">
+          <button onclick="doSummarize()">Summarize</button>
+          <button class="btn-secondary" onclick="downloadMarkdown()">Download Markdown</button>
+          <span id="sumStatus" class="status"></span>
+        </div>
+      </div>
+      <div id="sumOut" class="result"></div>
+    </section>
+
+    <section class="card">
+      <h2>Tips</h2>
+      <ul>
+        <li>Make sure <b>Ollama</b> is running: <code>ollama serve</code>, and you’ve pulled a model.</li>
+        <li>Ingest first, then Search/Summarize.</li>
+        <li>Try different chunk sizes (e.g., <code>350 / 80</code>) for more diverse retrieval.</li>
+        <li>If the summary ignores citations, increase <b>k</b>, lower <b>temperature</b>, or use a bigger model.</li>
+      </ul>
+    </section>
+  </div>
+  <footer class="muted">Local UI for your Production-Grade AI backend.</footer>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  function setStatus(el, msg, cls){ el.textContent = msg; el.className = 'status ' + (cls||''); }
+  function pretty(obj){ return '<pre>'+JSON.stringify(obj, null, 2)+'</pre>'; }
+
+  async function ping(){
+    const base = $('baseUrl').value.trim();
+    try{
+      const r = await fetch(base+'/health');
+      if(!r.ok) throw new Error(r.status+' '+r.statusText);
+      const j = await r.json();
+      setStatus($('health'), `OK (${j.model})`, 'ok');
+    }catch(e){
+      setStatus($('health'), 'Cannot reach API', 'err');
+    }
+  }
+
+  function resetForm(which){
+    if(which==='ingest'){ $('urls').value=''; $('ingestOut').innerHTML=''; setStatus($('ingestStatus'),'',''); }
+    if(which==='search'){ $('q').value=''; $('searchOut').innerHTML=''; setStatus($('searchStatus'),'',''); }
+    if(which==='summarize'){ $('topic').value=''; $('sumOut').innerHTML=''; setStatus($('sumStatus'),'',''); }
+  }
+
+  async function doIngest(){
+    const base = $('baseUrl').value.trim();
+    const urls = $('urls').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const tokens = Number($('tokens').value || 1000);
+    const overlap = Number($('overlap').value || 120);
+    if(urls.length===0){ setStatus($('ingestStatus'),'Please add at least one URL','warn'); return; }
+    setStatus($('ingestStatus'),'Ingesting…','');
+    $('ingestOut').innerHTML='';
+    try{
+      const r = await fetch(`${base}/ingest?tokens=${encodeURIComponent(tokens)}&overlap=${encodeURIComponent(overlap)}`,{
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(urls)
+      });
+      const j = await r.json();
+      if(!r.ok){ throw new Error(j.detail || r.statusText); }
+      setStatus($('ingestStatus'), `Done ✓  indexed=${j.indexed}, chunks=${j.chunks}, avg≈${j.avg_chunk_words}`, 'ok');
+      $('ingestOut').innerHTML = pretty(j);
+    }catch(e){
+      setStatus($('ingestStatus'), e.message, 'err');
+    }
+  }
+
+  async function doSearch(){
+    const base = $('baseUrl').value.trim();
+    const q = $('q').value.trim();
+    const k = Number($('kSearch').value || 5);
+    if(!q){ setStatus($('searchStatus'),'Enter a query','warn'); return; }
+    setStatus($('searchStatus'),'Searching…','');
+    $('searchOut').innerHTML='';
+    try{
+      const r = await fetch(`${base}/search?q=${encodeURIComponent(q)}&k=${encodeURIComponent(k)}`);
+      const j = await r.json();
+      if(!r.ok){ throw new Error(j.detail || r.statusText); }
+      setStatus($('searchStatus'), `Found ${j.results?.length||0} hit(s)`, 'ok');
+      $('searchOut').innerHTML = pretty(j);
+    }catch(e){
+      setStatus($('searchStatus'), e.message, 'err');
+    }
+  }
+
+  let lastSummary = null;
+  async function doSummarize(){
+    const base = $('baseUrl').value.trim();
+    const topic = $('topic').value.trim();
+    const k = Number($('kSum').value || 5);
+    const model = $('model').value;
+    const maxTokens = Number($('maxTokens').value || 400);
+    const temperature = Number($('temperature').value || 0.2);
+    if(!topic){ setStatus($('sumStatus'),'Enter a topic','warn'); return; }
+    setStatus($('sumStatus'),'Summarizing…','');
+    $('sumOut').innerHTML='';
+    try{
+      const url = `${base}/summarize?topic=${encodeURIComponent(topic)}&k=${k}&model=${encodeURIComponent(model)}&max_tokens=${maxTokens}&temperature=${temperature}`;
+      const r = await fetch(url);
+      const j = await r.json();
+      if(!r.ok){ throw new Error(j.detail || r.statusText); }
+      setStatus($('sumStatus'), `Done ✓ (model: ${j.model||model})`, 'ok');
+      lastSummary = j;
+      $('sumOut').innerHTML = `<pre>${j.summary || ''}</pre><div class="muted">used: ${j.used ?? '?'}</div>`;
+    }catch(e){
+      setStatus($('sumStatus'), e.message, 'err');
+    }
+  }
+
+  function downloadMarkdown(){
+    if(!lastSummary){ alert('No summary yet. Run Summarize first.'); return; }
+    const topic = $('topic').value.trim() || 'summary';
+    const md = `# Summary: ${topic}\n\n${lastSummary.summary || ''}\n\n---\nGenerated by Production-Grade AI UI\n`;
+    const blob = new Blob([md], {type:'text/markdown'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = topic.replace(/\s+/g,'_') + '.md';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // auto-ping on load
+  window.addEventListener('load', ping);
+</script>
+</body>
+</html>
