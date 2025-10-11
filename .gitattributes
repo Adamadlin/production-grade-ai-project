@@ -1,0 +1,11 @@
+# Tell GitHub Linguist how to classify code
+*.py linguist-detectable=true
+*.ts linguist-detectable=true
+*.tsx linguist-detectable=true
+*.js linguist-detectable=true
+
+# Don’t count dependencies or build artifacts
+frontend/node_modules/** linguist-vendored
+frontend/.next/** linguist-vendored
+out/** linguist-vendored
+vectorstore/** linguist-vendored
