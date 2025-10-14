@@ -1,11 +1,33 @@
-# Tell GitHub Linguist how to classify code
-*.py linguist-detectable=true
-*.ts linguist-detectable=true
-*.tsx linguist-detectable=true
-*.js linguist-detectable=true
+# --- Language detection (force-visible languages) ---
+*.py   linguist-detectable=true
+*.ts   linguist-detectable=true
+*.tsx  linguist-detectable=true
+*.js   linguist-detectable=true
+*.html linguist-detectable=true
+*.css  linguist-detectable=true
+*.md   linguist-detectable=true
+*.yml  linguist-detectable=true
 
-# Don’t count dependencies or build artifacts
-frontend/node_modules/** linguist-vendored
-frontend/.next/** linguist-vendored
-out/** linguist-vendored
-vectorstore/** linguist-vendored
+# --- Mark vendored / non-source directories (don’t affect language stats) ---
+/frontend/node_modules/** linguist-vendored
+/frontend/.next/**        linguist-vendored
+/frontend/out/**          linguist-vendored
+/vectorstore/**           linguist-vendored
+/data/**                  linguist-vendored
+/__pycache__/**           linguist-vendored
+/.venv/**                 linguist-vendored
+/tests/__pycache__/**     linguist-vendored
+
+# --- Docs and configuration should still count ---
+/docs/**                  linguist-documentation=false
+/.github/**               linguist-documentation=false
+
+# --- Prevent GitHub from treating large JSON/vector files as code ---
+*.json linguist-vendored
+*.bin  linguist-vendored
+*.pkl  linguist-vendored
+*.db   linguist-vendored
+
+# --- Optional: count frontend TypeScript as primary language (slightly boost TS%) ---
+frontend/**/*.ts linguist-language=TypeScript
+frontend/**/*.tsx linguist-language=TypeScript
