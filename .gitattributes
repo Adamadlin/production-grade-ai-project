@@ -22,7 +22,7 @@
 /docs/**                  linguist-documentation=false
 /.github/**               linguist-documentation=false
 
-# --- Prevent GitHub from treating large JSON/vector files as code ---
+# --- Prevent GitHub from treating large JSON/vector files as co`de ---
 *.json linguist-vendored
 *.bin  linguist-vendored
 *.pkl  linguist-vendored
