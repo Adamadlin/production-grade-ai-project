@@ -118,7 +118,7 @@ Windows later dominated global PC markets (wiki:10800–11300).
 
 ## 🎥 Demo Video
 
-[![Production-Grade AI Project Demo](https://img.youtube.com/vi/lIFiL-V_m18/0.jpg)](https://youtu.be/lIFiL-V_m18)
+https://www.youtube.com/watch?v=lIFiL-V_m18
 > Demonstration of ingesting Kali Linux documentation and generating summarized responses using **Qwen 2.5:3B-Instruct**.
 
 
