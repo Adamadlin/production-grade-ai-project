@@ -81,92 +81,73 @@
 //   examples: (n = 6) => jfetch<ExamplesResp>(`/examples?${new URLSearchParams({ n: String(n) }).toString()}`),
 // };
 
-// frontend/src/lib/api.ts
-const BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
 
-async function j<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const txt = await res.text().catch(() => '');
-    let msg = `HTTP ${res.status}`;
-    try {
-      const data = JSON.parse(txt);
-      if (data?.detail) msg = data.detail;
-    } catch {
-      if (txt) msg = `${msg} — ${txt}`;
-    }
-    throw new Error(msg);
-  }
-  return res.json();
+const BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
+const TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
+
+function authHeaders() {
+  const h: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (TOKEN) h['Authorization'] = `Bearer ${TOKEN}`;
+  return h;
 }
 
 export const api = {
-  health: async (): Promise<{ ok: boolean; env: string; model: string }> => {
-    const res = await fetch(`${BASE}/health`);
-    return j(res);
+  async health() {
+    const r = await fetch(`${BASE}/health`);
+    if (!r.ok) throw new Error(`Health failed: ${r.status}`);
+    return r.json();
   },
 
-  ingest: async (
-    urls: string[],
-    tokens = 1000,
-    overlap = 120,
-    force = false,
-  ) => {
-    const u = new URL(`${BASE}/ingest`);
-    u.searchParams.set('tokens', String(tokens));
-    u.searchParams.set('overlap', String(overlap));
-    u.searchParams.set('force', String(force));
-    const res = await fetch(u.toString(), {
+  async ingest(urls: string[], tokens = 1000, overlap = 120, force = false, collection?: string) {
+    const qs = new URLSearchParams();
+    qs.set('tokens', String(tokens));
+    qs.set('overlap', String(overlap));
+    qs.set('force', String(force));
+    if (collection) qs.set('collection', collection);
+
+    const r = await fetch(`${BASE}/ingest?${qs.toString()}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify(urls),
     });
-    return j(res);
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
   },
 
-  search: async (
-    q: string,
-    k = 5,
-    opts?: { domain?: string; source?: string }
-  ): Promise<{ query: string; results: any[] }> => {
-    const u = new URL(`${BASE}/search`);
-    u.searchParams.set('q', q);
-    u.searchParams.set('k', String(k));
-    // (Optional) you can send domain/source to backend via query if you add support later
-    if (opts?.domain) u.searchParams.set('domain', opts.domain);
-    if (opts?.source) u.searchParams.set('source', opts.source);
-    const res = await fetch(u.toString());
-    return j(res);
+  async search(q: string, k = 5, opts?: { collection?: string }) {
+    const qs = new URLSearchParams();
+    qs.set('q', q);
+    qs.set('k', String(k));
+    if (opts?.collection) qs.set('collection', opts.collection);
+
+    const r = await fetch(`${BASE}/search?${qs.toString()}`, { headers: authHeaders() });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
   },
 
-  summarize: async (
-    topic: string,
-    params?: {
-      k?: number;
-      model?: string;
-      temperature?: number;
-      max_tokens?: number;
-      domain?: string; // optional, future backend filter
-      source?: string; // optional, future backend filter
-    },
-  ): Promise<{ topic: string; summary: string; used: number; model: string }> => {
-    const u = new URL(`${BASE}/summarize`);
-    u.searchParams.set('topic', topic);
-    u.searchParams.set('k', String(params?.k ?? 8));
-    u.searchParams.set('model', String(params?.model ?? 'llama3:8b'));
-    u.searchParams.set('temperature', String(params?.temperature ?? 0.1));
-    u.searchParams.set('max_tokens', String(params?.max_tokens ?? 450));
-    // pass-through for future backend support
-    if (params?.domain) u.searchParams.set('domain', params.domain);
-    if (params?.source) u.searchParams.set('source', params.source);
+  async summarize(topic: string, params?: {
+    k?: number; model?: string; temperature?: number; max_tokens?: number; collection?: string;
+  }) {
+    const qs = new URLSearchParams();
+    qs.set('topic', topic);
+    qs.set('k', String(params?.k ?? 8));
+    if (params?.model) qs.set('model', params.model);
+    if (params?.temperature != null) qs.set('temperature', String(params.temperature));
+    if (params?.max_tokens) qs.set('max_tokens', String(params.max_tokens));
+    if (params?.collection) qs.set('collection', params.collection);
 
-    const res = await fetch(u.toString());
-    return j(res);
+    const r = await fetch(`${BASE}/summarize?${qs.toString()}`, { headers: authHeaders() });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
   },
 
-  examples: async (n = 6): Promise<{ examples: string[] }> => {
-    const u = new URL(`${BASE}/examples`);
-    u.searchParams.set('n', String(n));
-    const res = await fetch(u.toString());
-    return j(res);
+  async examples(n = 6, collection?: string) {
+    const qs = new URLSearchParams();
+    qs.set('n', String(n));
+    if (collection) qs.set('collection', collection);
+
+    const r = await fetch(`${BASE}/examples?${qs.toString()}`);
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
   },
 };
