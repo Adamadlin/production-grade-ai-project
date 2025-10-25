@@ -1,47 +1,54 @@
+import os
+from functools import lru_cache
+from typing import List
 
-
-# from pydantic_settings import BaseSettings  # pydantic v2
-
-# class Settings(BaseSettings):
-#     # runtime env
-#     ENV: str = "dev"
-
-#     # model choice (informational for now)
-#     MODEL_NAME: str = "qwen2.5-3b-instruct-4bit"
-
-#     # paths used by the pipeline
-#     DATA_DIR: str = "./data"
-#     OUT_DIR: str = "./out"
-#     VECTOR_DB_DIR: str = "./vectorstore"
-
-#     # optional: if you add a scraping API later
-#     SCRAPER_API_KEY: str | None = None
-
-#     class Config:
-#         env_file = ".env"
-
-# settings = Settings()
-
-
-
-# app/config.py
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
-    # Runtime environment
-    ENV: str = "dev"
+    # FastAPI env
+    ENV: str = Field(default="dev", description="Environment name")
 
-    # Default local LLM model for /summarize
-    MODEL_NAME: str = "qwen2.5:3b-instruct"
+    # rate limit (requests/minute)
+    RATE_LIMIT_PER_MIN: int = Field(default=60)
 
-    # Storage locations
-    VECTOR_DB_DIR: str = "vectorstore"
-    OUT_DIR: str = "out"
-    DATA_DIR: str = "data"  # ← manifests/registries live here
+    # model to advertise in /health (not enforced)
+    MODEL_NAME: str = Field(default="llama3:8b")
 
-    # Basic rate limiting
-    RATE_LIMIT_PER_MIN: int = 60
+    # where we persist artifacts
+    OUT_DIR: str = Field(default="out")
+    VECTOR_DB_DIR: str = Field(default="vectorstore")
+    DATA_DIR: str = Field(default="data")
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # collection name used by VectorDB
+    DEFAULT_COLLECTION: str = Field(default="default")
 
-settings = Settings()
+    # allowed CORS origins for frontend
+    # You can either set CORS_ORIGINS='http://localhost:3000,http://foo.com'
+    # or leave it *, which we'll treat as wildcard.
+    CORS_ORIGINS: str = Field(default="*")
+
+    model_config = SettingsConfigDict(
+        env_prefix="",                # read env vars as-is (e.g. ENV, DATA_DIR)
+        case_sensitive=False,
+        extra="ignore",               # <-- IMPORTANT: ignore unexpected keys instead of throwing
+    )
+
+    def cors_list(self) -> List[str]:
+        """
+        Helper: turn CORS_ORIGINS env into list[str] for FastAPI middleware.
+        '*' means allow all.
+        """
+        if self.CORS_ORIGINS.strip() == "*":
+            return ["*"]
+        return [x.strip() for x in self.CORS_ORIGINS.split(",") if x.strip()]
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+# create a singleton we import everywhere else
+settings = get_settings()
