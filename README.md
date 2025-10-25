@@ -21,8 +21,7 @@ It combines:
 - 🧮 **ChromaDB** – vector database for retrieval  
 - 🦙 **Ollama** – local LLM runtime (e.g., `llama3:8b`, `qwen2.5:3b-instruct`)
 
-https://youtu.be/lIFiL-V_m18  
-*(Short demo: ingesting Kali Linux docs and asking security questions)*
+
 
 ---
 
@@ -151,6 +150,8 @@ Ollama Runtime (local LLMs)
 🎥 Demo
 
 ▶ Watch Demo on YouTube
+https://youtu.be/lIFiL-V_m18  
+*(Short demo: ingesting Kali Linux docs and asking security questions)*
 
 Highlights
 	•	Ingests Kali Linux tool pages (Nmap, Metasploit, etc.)
