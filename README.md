@@ -207,7 +207,7 @@ make test               Run pytest suite
 
 Adam Adlin
 🚀 Full-stack developer & AI systems builder
-🔗 GitHub Profile
+
 
 ⸻
 
