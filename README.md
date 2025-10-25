@@ -1,166 +1,226 @@
 # 🧠 Production-Grade AI Project  
-**End-to-End Retrieval-Augmented Generation (RAG) System built with FastAPI, Ollama, and Next.js**
+### Local, Private, End-to-End RAG System (FastAPI + Ollama + Next.js)
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green?logo=fastapi)
+![Next.js](https://img.shields.io/badge/Next.js-Frontend-black?logo=next.js)
+![Ollama](https://img.shields.io/badge/Ollama-Local%20LLMs-orange)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
+> ⚡️ **A production-grade, fully local AI pipeline**  
+> Retrieve → Summarize → Chat with your own data, **completely offline**.
 
 ---
 
-## 🚀 Overview  
-A **full-stack, production-ready AI system** built completely from scratch.  
-It combines a **Python FastAPI backend** for ingestion, retrieval, and summarization with a **Next.js + Tailwind frontend** that delivers a smooth, chat-style experience.
+## 🚀 Overview
+This system is a **local Retrieval-Augmented Generation (RAG) stack** that runs end-to-end on your machine — no cloud, no API keys.
 
-> 💡 **Paste any URL** — Wikipedia, blogs, EULAs — and the system will:  
-> 🔍 Crawl & clean it  
-> 📚 Index it in a local vector DB  
-> 🧠 Search or summarize with verified inline citations  
-> ⚡ Run fully offline with local Ollama models  
+It combines:
+- 🧩 **FastAPI backend** – handles scraping, ingestion, embedding, and summarization  
+- 🖥 **Next.js + Tailwind frontend** – smooth chat-style interface  
+- 🧮 **ChromaDB** – vector database for retrieval  
+- 🦙 **Ollama** – local LLM runtime (e.g., `llama3:8b`, `qwen2.5:3b-instruct`)
 
----
-
-## 🧩 Tech Stack  
-
-### 🖥 Backend (AI Core)
-| Component | Purpose |
-|------------|----------|
-| **FastAPI** | High-performance async API framework |
-| **Chroma Vector DB** | Persistent local embedding store |
-| **Ollama** | Runs local LLMs *(llama3 8B / qwen2.5 3B-instruct)* |
-| **Sentence Transformers** | Embedding & semantic retrieval |
-| **SlowAPI** | Rate-limiting middleware |
-| **Structured Logging** | Clean, production-grade logs |
-
-### 💻 Frontend (UI)
-| Component | Purpose |
-|------------|----------|
-| **Next.js 14 (App Router)** | Modern React framework |
-| **React 18 + Hooks** | Declarative interface |
-| **Tailwind CSS** | Clean, responsive design |
-| **React Markdown + GFM** | Citation-friendly output |
-| **TypeScript** | Safe, maintainable code |
+https://youtu.be/lIFiL-V_m18  
+*(Short demo: ingesting Kali Linux docs and asking security questions)*
 
 ---
 
-## 🏗️ Architecture 
-User
-↓
-Next.js (Frontend)
-↓
-FastAPI (Backend)
-↓
-RAG Pipeline → Ollama (LLM)
-↓
-Chroma Vector DB
+## ⚙️ Quick Start
 
+### Prerequisites
+- macOS / Linux  
+- Python 3.10 +  
+- Node 18 + / npm  
+- [Ollama](https://ollama.com) installed locally  
 
-### Pipeline Flow
-| Endpoint | Description |
-|-----------|--------------|
-| `/ingest` | Scrape → clean → chunk → embed → index documents |
-| `/search` | Retrieve semantically similar text |
-| `/summarize` | Generate summaries with strict citation rules |
+### 1️⃣ Clone and install
 
----
-
-## 🧱 Folder Structure 
-├── app/                # FastAPI backend
-│   ├── clients/        # Scraper, LLM, storage connectors
-│   ├── pipeline/       # Ingestion, cleaning, chunking, QC
-│   ├── rag/            # RAG + summarization logic
-│   └── utils/          # Hashing, registry, timing, etc.
-│
-├── frontend/           # Next.js + Tailwind app
-│   ├── src/app/        # Main pages
-│   ├── src/components/ # ChatBubble, Spinner, Toast
-│   └── src/lib/        # API wrapper
-│
-├── vectorstore/        # Persisted embeddings
-├── data/               # Registry / indexes
-├── out/                # Exported datasets
-└── scripts/cli.py      # Optional CLI entry
-
----
-
-## ⚙️ Local Setup  
-
-### 1️⃣ Backend — FastAPI + Ollama
 ```bash
-# Create virtual environment
-python -m venv .venv
+git clone https://github.com/Adamadlin/production-grade-ai-project.git
+cd production-grade-ai-project
+
+python3 -m venv .venv
 source .venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 
-# Start Ollama (ensure model pulled)
-ollama serve
-ollama pull llama3:8b
-
-# Run the backend
-uvicorn app.main:app --reload --port 8000
-
-Test:
-curl http://localhost:8000/health
-
-2️⃣ Frontend — Next.js UI
 cd frontend
 npm install
+cd ..
+
+2️⃣ Run the stack
+Open three terminals:
+
+# 🧠 Backend API
+source .venv/bin/activate
+make dev-backend
+
+# 🤖 Local models
+make ollama
+
+# 💬 Frontend UI
+cd frontend
 npm run dev
+Then visit → http://localhost:3000
 
-Then open 👉 http://localhost:3000
-(The frontend automatically connects to http://localhost:8000 as defined in .env.local.)
+🧩 How It Works
 
+🪄 1. Ingest
 
-Example Usage
-	1.	In the web UI, paste a URL (e.g. https://en.wikipedia.org/wiki/History_of_Microsoft)
-	2.	Click Ingest to index it
-	3.	Type a topic like “history of Microsoft” and click Summarize
-	4.	The result will show citations, for example:
+Paste URLs into the “Ingest URLs” box → the backend:
+	1.	Fetches and scrapes pages
+	2.	Cleans text
+	3.	Chunks text (tokens size + overlap)
+	4.	Embeds + stores in ChromaDB
+	5.	Skips already indexed pages (unless force=true)
 
-Microsoft was founded by Bill Gates and Paul Allen in 1975 (wiki:400–900).
-Windows later dominated global PC markets (wiki:10800–11300).
+🔍 2. Search
 
+Performs semantic similarity search in ChromaDB, returning matching text chunks and their citations.
 
-## 🎥 Demo Video
+🧠 3. Summarize
 
-https://www.youtube.com/watch?v=lIFiL-V_m18
-> Demonstration of ingesting Kali Linux documentation and generating summarized responses using **Qwen 2.5:3B-Instruct**.
+Retrieves → builds prompt → calls local LLM → outputs a summary where every sentence ends with a citation.
 
+Example query:
 
-Environment Variables
-.env (Backend)
+“How to use Nmap on my local network?”
 
-MODEL_NAME=llama3:8b
-RATE_LIMIT_PER_MIN=30
-ENV=local
-OUT_DIR=out
-DATA_DIR=data
-VECTOR_DB_DIR=vectorstore
-.env.local (Frontend)
+Output:
 
-NEXT_PUBLIC_API_BASE=http://localhost:8000
+The summary explains the tool usage and cites the Kali Linux pages used to build the answer.
 
+⸻
 
+🧮 UI Controls (Frontend)
 
-Endpoint :/health
-Method :GET
-Description : Check server status
+🔧 Ingest Panel
 
+controll       Description
+--------       -----------   
+URLs           One per line — pages to scrape + index
+tokens         Approx. words per chunk (100–4000)
+overlap        Words repeated between chunks
+force          Re-index even if content unchanged
+collection     Vector namespace (e.g. default, eula_docs)
 
-Endpoint :/ingest
-Method: POST
-Descruption: Crawl + embed web data
-
-
-Endpoint :/search
-Method: GET
-Description :Semantic retrieval
-
-Endpoint : /summarize
-Method: GET
-Description :Generate a cited summary
+Result Metrics: chunks, indexed, skipped, avg_chunk_words.
 
 
 
-License
+💬 Chat Panel
 
-MIT © 2025 Adam Adlin
+field      Purpose
+----       -------
+mode  ---   Search → show chunks; Summarize → generate answer
+model  ---   Local LLM (llama3:8b, qwen2.5:3b-instruct, etc.)
+k     ---      Number of chunks retrieved before answering
+temperature ---   Creativity level (0.0 = strict facts)
+max_tokens --- Limit for generated text
+domain/source filters --- Restrict search to specific domains or paths
+History sidebar --- Saved previous queries in localStorage
 
 
-If you like this project, please ⭐ star the repo — it really helps!
-Connect with me on LinkedIn for updates and future releases.
+🔒 Privacy & Security
+	•	Everything runs locally via Ollama
+	•	No data leaves your machine
+	•	Outbound requests only when you fetch public URLs
+	•	Works offline once indexed
+	•	Ideal for private R&D, policy auditing, and training use
+
+
+🏗 Architecture
+
+Frontend (Next.js + Tailwind)
+       │
+       ▼
+FastAPI Backend
+ ├── /ingest        → scrape → clean → chunk → embed
+ ├── /search        → semantic retrieval from Chroma
+ ├── /summarize     → RAG prompt → local LLM → citations
+ ├── /examples      → example queries from registry
+ └── /health        → system check
+       │
+       ▼
+ChromaDB Vector Store
+       │
+       ▼
+Ollama Runtime (local LLMs)
+
+🎥 Demo
+
+▶ Watch Demo on YouTube
+
+Highlights
+	•	Ingests Kali Linux tool pages (Nmap, Metasploit, etc.)
+	•	Answers questions like “how do I use Nmap?” with citations
+	•	Fully offline and reproducible
+	•	Uses llama3:8b and qwen2.5:3b-instruct
+
+
+
+Layer       Technology
+-----       ---------- 
+Backend      FastAPI · Python · pydantic · httpx
+Vector DB    ChromaDB
+Frontend     Next.js 14 · TypeScript · Tailwind CSS
+Models        Llama 3 · Qwen 2.5 (through Ollama)
+Misc          SlowAPI (rate limiting) · Makefile (dev automation)
+
+
+🧭 Repository Structure
+
+production-grade-ai-project/
+├── app/
+│   ├── clients/          # scraper + LLM clients
+│   ├── pipeline/         # ingest, clean, chunk, export
+│   ├── rag/              # vector DB + summarization
+│   ├── utils/            # hashing + registry helpers
+│   ├── config.py         # pydantic settings
+│   └── main.py           # FastAPI entrypoint
+│
+├── frontend/
+│   ├── src/app/page.tsx  # main UI
+│   ├── components/       # ChatBubble, Sidebar, etc.
+│   └── lib/api.ts        # backend communication
+│
+├── Makefile              # quick dev commands
+├── README.md
+└── requirements.txt
+
+
+
+🧰 Development Commands
+
+Command                 Description
+------                  -----------
+make dev-backend        Start FastAPI backend
+make dev-frontend       Start Next.js frontend
+make ollama             Serve Ollama + pull models
+make seed               Ingest Wikipedia demo page
+make fmt                Format Python code (ruff + black)
+make test               Run pytest suite
+
+🧑‍🎓 Author
+
+Adam Adlin
+🚀 Full-stack developer & AI systems builder
+🔗 GitHub Profile
+
+⸻
+
+🪪 License
+
+MIT License © 2025 Adam Adlin
+
+
+🌟 Contributing
+
+Pull requests that improve usability, docs, or clarity are welcome.
+If you build extensions or use it with your own data, share it via Issues or Discussions!
+
+
+
+
+
