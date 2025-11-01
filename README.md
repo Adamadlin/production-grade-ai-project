@@ -92,6 +92,18 @@ The summary explains the tool usage and cites the Kali Linux pages used to build
 
 ⸻
 
+---
+
+## 📄 Upload PDFs (New Feature – Phase A)
+
+You can now upload **local PDF files** directly to the backend — perfect for protected, paywalled, or offline documents.  
+The system will extract text, chunk it, embed it, and add it to your vector collection automatically.
+
+### Requirements
+Make sure the following dependencies are installed (already in `requirements.txt`):
+```bash
+pip install python-multipart pdfminer.six
+
 🧮 UI Controls (Frontend)
 
 🔧 Ingest Panel
