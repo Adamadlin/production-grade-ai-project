@@ -33,9 +33,11 @@ It combines:
 - Node 18 + / npm  
 - [Ollama](https://ollama.com) installed locally  
 
-### 1️⃣ Clone and install
+
 
 ```bash
+1️⃣ Clone and install
+
 git clone https://github.com/Adamadlin/production-grade-ai-project.git
 cd production-grade-ai-project
 
